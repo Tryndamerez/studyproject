@@ -47,9 +47,75 @@ int MakeDriverInfo()//1==>A 2==>B 3==>C 26==>Z
 			result += 'A' + i - 1;
 		}
 	}
-	CPacket pack(1, (BYTE*)result.c_str(), result.size());
+	CPacket pack(1, (BYTE*)result.c_str(), result.size());//打包用的
 	Dump((BYTE*)pack.Data(), pack.Size());
 	//CServerSocket::getInstance()->Send(pack);
+	return 0;
+}
+
+#include <stdio.h>
+#include <io.h>
+#include <list>
+
+typedef struct  file_info
+{
+	file_info()
+	{
+		IsInvalid = FALSE;
+		IsDirectory = -1;
+		HasNext = TRUE;
+		memset(szFileName, 0, sizeof(szFileName));
+	}
+	BOOL IsInvalid;//是否有效
+	BOOL IsDirectory;//是文件还是目录 0否 1是
+	BOOL HasNext;//是否还有后续，0没有 1有
+	char szFileName[256];//文件名
+}FILEINFO,*PFILEINFO;
+
+int MakeDirectoryInfo()
+{
+	std::string strPath;
+	//std::list< FILEINFO> lsFileInfos;
+	if (CServerSocket::getInstance()->GetFilePath(strPath) == false)
+	{
+		OutputDebugString(_T("当前命令不是获取文件列表，命令解析错误！！"));
+		return -1;
+	}
+	if (_chdir(strPath.c_str()) != 0)
+	{
+		FILEINFO finfo;
+		finfo.IsInvalid = TRUE;
+		finfo.IsDirectory = TRUE;
+		finfo.HasNext = FALSE;
+		memcpy(finfo.szFileName, strPath.c_str(), strPath.size());
+		//lsFileInfos.push_back(finfo);
+		CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
+		CServerSocket::getInstance()->Send(pack);
+		OutputDebugString(_T("没有权限访问目录！！"));
+		return -2;
+	}
+	_finddata_t fdata;
+	int hfind = 0;
+	if ((hfind = _findfirst("*", &fdata)) == -1)
+	{
+		OutputDebugString(_T("没有找到任何文件！！"));
+		return -3;
+	}
+	do 
+	{
+		FILEINFO finfo;
+		finfo.IsDirectory = (fdata.attrib & _A_SUBDIR) != 0;
+		memcpy(finfo.szFileName, fdata.name, strlen(fdata.name));
+		//lsFileInfos.push_back(finfo);
+		CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
+		CServerSocket::getInstance()->Send(pack);
+	} 
+	while (!_findnext(hfind, &fdata));
+	//发送信息到控制端
+	FILEINFO finfo;
+	finfo.HasNext = FALSE;
+	CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
+	CServerSocket::getInstance()->Send(pack);
 	return 0;
 }
 
@@ -103,6 +169,9 @@ int main()
 			{
 			case 1://查看磁盘分区
 				MakeDriverInfo();
+				break;
+			case 2://查看指定目录下的文件
+				MakeDirectoryInfo();
 				break;
 			}
 		}
