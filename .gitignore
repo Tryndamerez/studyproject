@@ -15,3 +15,9 @@
 /RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.log
 /RemoteCtrl/RemoteCtrl/test2022.jpg
 /RemoteCtrl/RemoteCtrl/test2022.png
+/RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.tlog/CL.command.1.tlog
+/RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.tlog/CL.read.1.tlog
+/RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.tlog/CL.write.1.tlog
+/RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.tlog/link.command.1.tlog
+*.obj
+/RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.res
