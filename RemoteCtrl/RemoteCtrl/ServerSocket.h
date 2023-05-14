@@ -4,6 +4,7 @@
 
 #pragma warning(disable:4244)
 #pragma warning(disable:4267)
+#pragma warning(disable:4996)
 
 #pragma pack(push)
 #pragma pack(1)
@@ -159,11 +160,14 @@ public:
 		sockaddr_in serv_adr;
 		memset(&serv_adr, 0, sizeof(serv_adr));
 		serv_adr.sin_family = AF_INET;
-		serv_adr.sin_addr.s_addr = INADDR_ANY;
-		serv_adr.sin_port = htons(6000);
+		serv_adr.sin_addr.s_addr= htonl(INADDR_ANY);
+		serv_adr.sin_port = htons(7000);
 		//绑定
-		if (bind(m_sock, (sockaddr*)&serv_adr, sizeof(serv_adr)) == -1)
+		int ret = bind(m_sock, (sockaddr*)&serv_adr, sizeof(serv_adr));
+		if ( ret== -1)
 		{
+			//TRACE("ret=%d m_sock= %d serv_adr=%d error=%s\r\n", ret, m_sock, serv_adr, GetLastError());
+			//closesocket(m_sock);
 			return false;
 		}
 		if (listen(m_sock, 1) == -1)
@@ -174,18 +178,27 @@ public:
 	}
 	bool AcceptClient()
 	{
+		TRACE("AcceptClient is beginning\r\n");
 		sockaddr_in client_adr;
 		int cli_sz = sizeof(client_adr);
 		m_client =accept(m_sock, (sockaddr*)&client_adr, &cli_sz);
+		TRACE("m_client= %d\r\n", m_client);
 		if (m_client == -1) return false;
 		return true;
 	}
+
 #define BUFFER_SIZE 4096
+
 	int DealCommand()
 	{
 		if (m_client == -1) return -1;
 		//char buffer[1024] = "";
 		char* buffer = new char[BUFFER_SIZE];
+		if (buffer == NULL)
+		{
+			TRACE("内存不足！\r\n");
+			return -2;
+		}
 		memset(buffer, 0, BUFFER_SIZE);
 		size_t index = 0;
 		while (true)
@@ -193,17 +206,22 @@ public:
 			size_t len = recv(m_client, buffer + index, BUFFER_SIZE - index, 0);
 			if (len <= 0)
 			{
+				delete[]buffer;
 				return -1;
 			}
+			TRACE("recv %d\r\n", len);
 			index += len;
 			m_packet = CPacket((BYTE*)buffer, len);
 			if (len > 0)
 			{
 				memmove(buffer, buffer + len, BUFFER_SIZE - len);
 				index -= len;
+				delete[]buffer;
 				return m_packet.sCmd;
 			}
 		}
+		delete[]buffer;
+		return -1;
 	}
 
 	bool Send(const char* pData, int nSize)
@@ -237,6 +255,17 @@ public:
 		}
 		return false;
 	}
+
+	CPacket& GetPacket()
+	{
+		return m_packet;
+	}
+
+	void CloseClient()
+	{
+		closesocket(m_client);
+		m_client = INVALID_SOCKET;
+	}
 private:
 	SOCKET m_sock,m_client;
 	CPacket m_packet;
@@ -254,7 +283,7 @@ private:
 			MessageBox(NULL, _T("无法初始化套接字环境,请检查网络设置"), _T("初始化错误！"), MB_OK | MB_ICONERROR);
 			exit(0);
 		}
-		SOCKET m_sock = socket(PF_INET, SOCK_STREAM, 0);
+		m_sock = socket(PF_INET, SOCK_STREAM, 0);
 	}
 	~CServerSocket()
 	{

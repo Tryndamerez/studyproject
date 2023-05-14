@@ -22,3 +22,4 @@
 *.obj
 /RemoteCtrl/RemoteCtrl/Debug/RemoteCtrl.res
 /RemoteCtrl/RemoteClient/x64/Debug
+/RemoteCtrl/RemoteCtrl.zip
