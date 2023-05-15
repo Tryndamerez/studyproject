@@ -161,7 +161,7 @@ public:
 		memset(&serv_adr, 0, sizeof(serv_adr));
 		serv_adr.sin_family = AF_INET;
 		serv_adr.sin_addr.s_addr= htonl(INADDR_ANY);
-		serv_adr.sin_port = htons(7000);
+		serv_adr.sin_port = htons(6000);
 		//°ó¶¨
 		int ret = bind(m_sock, (sockaddr*)&serv_adr, sizeof(serv_adr));
 		if ( ret== -1)
