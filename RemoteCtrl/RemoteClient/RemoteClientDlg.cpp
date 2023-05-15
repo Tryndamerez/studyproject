@@ -207,14 +207,13 @@ void CRemoteClientDlg::OnBnClickedBtnFileinfo()
 	m_Tree.DeleteAllItems();
 	for (size_t i = 0; i < drivers.size(); i++)
 	{
-		if (drivers[i] == '.')
+		if (drivers[i] == ',')
 		{
 			dr += ":";
-			m_Tree.InsertItem(dr.c_str(),TVI_LAST);
+			m_Tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);
 			dr.clear();
 			continue;
 		}
 		dr += drivers[i];
 	}
-
 }

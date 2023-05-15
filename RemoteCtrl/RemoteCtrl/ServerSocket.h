@@ -36,7 +36,7 @@ public:
 	{
 		sHead = pack.sHead;
 		nLength = pack.nLength;
-		sCmd = pack.nLength;
+		sCmd = pack.sCmd;
 		strData = pack.strData;
 		sSum = pack.sSum;
 	}
@@ -57,7 +57,7 @@ public:
 			nSize = 0;
 			return;
 		}
-		nLength = *(WORD*)(pData + i);
+		nLength = *(DWORD*)(pData + i);
 		i += 4;
 		if (nLength + i > nSize)//包未完全接收到，就返回，解析失败
 		{
@@ -93,7 +93,7 @@ public:
 		{
 			sHead = pack.sHead;
 			nLength = pack.nLength;
-			sCmd = pack.nLength;
+			sCmd = pack.sCmd;
 			strData = pack.strData;
 			sSum = pack.sSum;
 		}

@@ -432,7 +432,7 @@ int main()
 		if (!AfxWinInit(hModule, nullptr, ::GetCommandLine(), 0))
 		{
 			// TODO: 在此处为应用程序的行为编写代码。
-			wprintf(L"错误: MFC 初始化失败\n");
+			wprintf(L"错误: MFC初始化失败\n");
 			nRetCode = 1;
 		}
 		else
