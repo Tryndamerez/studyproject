@@ -58,21 +58,6 @@ int MakeDriverInfo()//1==>A 2==>B 3==>C 26==>Z
 #include <io.h>
 #include <list>
 
-typedef struct  file_info
-{
-	file_info()
-	{
-		IsInvalid = FALSE;
-		IsDirectory = -1;
-		HasNext = TRUE;
-		memset(szFileName, 0, sizeof(szFileName));
-	}
-	BOOL IsInvalid;//是否有效
-	BOOL IsDirectory;//是文件还是目录 0否 1是
-	BOOL HasNext;//是否还有后续，0没有 1有
-	char szFileName[256];//文件名
-}FILEINFO,*PFILEINFO;
-
 int MakeDirectoryInfo()
 {
 	std::string strPath;
@@ -85,10 +70,7 @@ int MakeDirectoryInfo()
 	if (_chdir(strPath.c_str()) != 0)
 	{
 		FILEINFO finfo;
-		finfo.IsInvalid = TRUE;
-		finfo.IsDirectory = TRUE;
 		finfo.HasNext = FALSE;
-		memcpy(finfo.szFileName, strPath.c_str(), strPath.size());
 		//lsFileInfos.push_back(finfo);
 		CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
 		CServerSocket::getInstance()->Send(pack);
@@ -100,6 +82,10 @@ int MakeDirectoryInfo()
 	if ((hfind = _findfirst("*", &fdata)) == -1)
 	{
 		OutputDebugString(_T("没有找到任何文件！！"));
+		FILEINFO finfo;
+		finfo.HasNext = FALSE;
+		CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
+		CServerSocket::getInstance()->Send(pack);
 		return -3;
 	}
 	do 
@@ -107,7 +93,7 @@ int MakeDirectoryInfo()
 		FILEINFO finfo;
 		finfo.IsDirectory = (fdata.attrib & _A_SUBDIR) != 0;
 		memcpy(finfo.szFileName, fdata.name, strlen(fdata.name));
-		//lsFileInfos.push_back(finfo);
+		TRACE("%s \r\n", finfo.szFileName);
 		CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
 		CServerSocket::getInstance()->Send(pack);
 	} 
@@ -317,7 +303,7 @@ unsigned _stdcall threadLockDlg(void* arg)
 	rect.right = GetSystemMetrics(SM_CXFULLSCREEN);
 	rect.bottom = GetSystemMetrics(SM_CYFULLSCREEN);
 
-	rect.bottom *= 1.03;
+	rect.bottom = LONG(rect.bottom * 1.03);
 	dlg.MoveWindow(rect);
 	//窗口置顶
 	dlg.SetWindowPos(&dlg.wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
