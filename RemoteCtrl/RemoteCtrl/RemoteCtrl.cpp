@@ -70,7 +70,7 @@ int MakeDirectoryInfo()
 	if (_chdir(strPath.c_str()) != 0)
 	{
 		FILEINFO finfo;
-		finfo.HasNext = FALSE;
+		finfo.HasNext = TRUE;
 		//lsFileInfos.push_back(finfo);
 		CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));
 		CServerSocket::getInstance()->Send(pack);
@@ -130,23 +130,25 @@ int DownloadFile()
 		CPacket pack(4, (BYTE*)&data, 8);
 		CServerSocket::getInstance()->Send(pack);
 		return -1;
-	}
-	fseek(pFile, 0, SEEK_END);
-	data = _ftelli64(pFile);
-	CPacket head(4, (BYTE*)&data, 8);
-	fseek(pFile, 0, SEEK_SET);
-	char buffer[1024] = "";
-	size_t rlen = 0;
-	do 
+	}if (pFile != NULL)
 	{
-		rlen=fread(buffer, 1, 1024, pFile);
-		CPacket pack(4, (BYTE*)buffer, rlen);
-		CServerSocket::getInstance()->Send(pack);
-	} 
-	while (rlen>=1024);
+		fseek(pFile, 0, SEEK_END);
+		data = _ftelli64(pFile);
+		CPacket head(4, (BYTE*)&data, 8);
+		CServerSocket::getInstance()->Send(head);
+		fseek(pFile, 0, SEEK_SET);
+		char buffer[1024] = "";
+		size_t rlen = 0;
+		do
+		{
+			rlen = fread(buffer, 1, 1024, pFile);
+			CPacket pack(4, (BYTE*)buffer, rlen);
+			CServerSocket::getInstance()->Send(pack);
+		} while (rlen >= 1024);
+		fclose(pFile);
+	}
 	CPacket pack(4, NULL, 0);
 	CServerSocket::getInstance()->Send(pack);
-	fclose(pFile);
 	return 0;
 }
 
