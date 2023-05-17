@@ -225,11 +225,17 @@ void CRemoteClientDlg::OnBnClickedBtnFileinfo()
 		{
 			dr += ":";
 			HTREEITEM hTemp = m_Tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);
-			m_Tree.InsertItem(0, hTemp, TVI_LAST);
+			m_Tree.InsertItem(NULL, hTemp, TVI_LAST);
 			dr.clear();
 			continue;
 		}
 		dr += drivers[i];
+		if (i == drivers.size() - 1) {
+			dr += ":";
+			HTREEITEM hTemp = m_Tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);
+			m_Tree.InsertItem(NULL, hTemp, TVI_LAST);
+			dr.clear();
+		}
 	}
 }
 
@@ -272,6 +278,7 @@ void CRemoteClientDlg::threadWatchData()
 					pStream->Write(pData, pClient->GetPacket().strData.size(), &length);
 					LARGE_INTEGER bg = { 0 };
 					pStream->Seek(bg, STREAM_SEEK_SET, NULL);
+					if (m_image != NULL)m_image.Destroy();
 					m_image.Load(pStream);
 					m_isFull = true;
 				}
@@ -438,10 +445,9 @@ CString CRemoteClientDlg::GetPath(HTREEITEM hTree)
 	do
 	{
 		strTmp = m_Tree.GetItemText(hTree);
-		strRet += strTmp + '\\' + strRet;
+		strRet = strTmp + '\\' + strRet;
 		hTree = m_Tree.GetParentItem(hTree);
-	} 
-	while (hTree != NULL);
+	}while (hTree != NULL);
 	return strRet;
 }
 
@@ -548,6 +554,11 @@ LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 	{
 		CString strFile = (LPCSTR)lParam;
 		ret = SendCommandPacket(cmd, wParam & 1, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
+	}
+	break;
+	case 5:
+	{
+		ret = SendCommandPacket(cmd, wParam & 1, (BYTE*)lParam, sizeof(MOUSEEV));
 	}
 	break;
 	case 6:

@@ -112,7 +112,7 @@ public:
 		BYTE* pData = (BYTE*)strOut.c_str();
 		*(WORD*)pData = sHead;
 		pData += 2;
-		*(WORD*)pData = nLength;
+		*(DWORD*)pData = nLength;
 		pData += 4;
 		*(WORD*)pData = sCmd;
 		pData += 2;
@@ -205,7 +205,7 @@ public:
 		return true;
 	}
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 409600
 
 	int DealCommand()
 	{

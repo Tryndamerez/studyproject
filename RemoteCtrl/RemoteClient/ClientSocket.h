@@ -38,7 +38,7 @@ public:
 	{
 		sHead = pack.sHead;
 		nLength = pack.nLength;
-		sCmd = pack.nLength;
+		sCmd = pack.sCmd;
 		strData = pack.strData;
 		sSum = pack.sSum;
 	}
@@ -59,7 +59,7 @@ public:
 			nSize = 0;
 			return;
 		}
-		nLength = *(WORD*)(pData + i);
+		nLength = *(DWORD*)(pData + i);
 		i += 4;
 		if (nLength + i > nSize)//包未完全接收到，就返回，解析失败
 		{
@@ -72,7 +72,7 @@ public:
 		{
 			strData.resize(nLength - 2 - 2);
 			memcpy((void*)strData.c_str(), pData + i, nLength - 4);
-			TRACE("%s\r\n", strData.c_str()+12);
+			//TRACE("%s\r\n", strData.c_str()+12);
 			i += nLength - 4;
 		}
 		sSum = *(WORD*)(pData + i);
@@ -96,7 +96,7 @@ public:
 		{
 			sHead = pack.sHead;
 			nLength = pack.nLength;
-			sCmd = pack.nLength;
+			sCmd = pack.sCmd;
 			strData = pack.strData;
 			sSum = pack.sSum;
 		}
@@ -112,7 +112,7 @@ public:
 		BYTE* pData = (BYTE*)strOut.c_str();
 		*(WORD*)pData = sHead;
 		pData += 2;
-		*(WORD*)pData = nLength;
+		*(DWORD*)pData = nLength;
 		pData += 4;
 		*(WORD*)pData = sCmd;
 		pData += 2;
@@ -201,7 +201,7 @@ public:
 		return true;
 	}
 
-#define BUFFER_SIZE 409600
+#define BUFFER_SIZE 4096000
 
 	int DealCommand()
 	{

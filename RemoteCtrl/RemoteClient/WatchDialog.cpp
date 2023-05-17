@@ -44,12 +44,14 @@ END_MESSAGE_MAP()
 // CWatchDialog 消息处理程序
 
 
-CPoint CWatchDialog::UserPoint2RemoteScreenPoint(CPoint& point)
+CPoint CWatchDialog::UserPoint2RemoteScreenPoint(CPoint& point,bool isScreen)
 {//800 450
 	CRect clientRect;
-	ScreenToClient(&point);//全局坐标到客户区域坐标
+	if(isScreen) ScreenToClient(&point);//全局坐标到客户区域坐标
+	TRACE("x=%d y=%d\r\n", point.x, point.y);
 	//本地坐标到远程坐标
 	m_picture.GetWindowRect(clientRect);
+	TRACE("Width=%d Height=%d\r\n", clientRect.Width(), clientRect.Height());
 	return CPoint(point.x * 1920 / clientRect.Width(), point.y * 1080 / clientRect.Height());
 }
 
@@ -86,37 +88,46 @@ void CWatchDialog::OnTimer(UINT_PTR nIDEvent)
 
 void CWatchDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
+	TRACE("x=%d y=%d\r\n", point.x, point.y);
+	//坐标转换
+	CPoint remote = UserPoint2RemoteScreenPoint(point);
+	TRACE("x=%d y=%d\r\n", point.x, point.y);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;//左键
+	event.nAction = 1;//双击
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
+	CDialog::OnLButtonDblClk(nFlags, point);
+}
+
+void CWatchDialog::OnLButtonDown(UINT nFlags, CPoint point)
+{
 	//坐标转换
 	CPoint remote = UserPoint2RemoteScreenPoint(point);
 	//封装
 	MOUSEEV event;
 	event.ptXY = remote;
 	event.nButton = 0;//左键
-	event.nAction = 2;//双击
-	CClientSocket* pClient = CClientSocket::getInstance();
-	CPacket pack(5, (BYTE*)&event, sizeof(event));
-	pClient->Send(pack);
-	CDialog::OnLButtonDblClk(nFlags, point);
-}
-
-void CWatchDialog::OnLButtonDown(UINT nFlags, CPoint point)
-{
+	event.nAction = 2;//按下
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM)&event);
 	CDialog::OnLButtonDown(nFlags, point);
 }
 
 
 void CWatchDialog::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	////坐标转换
-	//CPoint remote = UserPoint2RemoteScreenPoint(point);
-	////封装
-	//MOUSEEV event;
-	//event.ptXY = remote;
-	//event.nButton = 0;//左键
-	//event.nAction = 4;//抬起
-	//CClientSocket* pClient = CClientSocket::getInstance();
-	//CPacket pack(5, (BYTE*)&event, sizeof(event));
-	//pClient->Send(pack);
+	//坐标转换
+	CPoint remote = UserPoint2RemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;//左键
+	event.nAction = 3;//抬起
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 	CDialog::OnLButtonUp(nFlags, point);
 }
 
@@ -129,10 +140,9 @@ void CWatchDialog::OnRButtonDown(UINT nFlags, CPoint point)
 	MOUSEEV event;
 	event.ptXY = remote;
 	event.nButton = 2;//右键
-	event.nAction = 2;//双击
-	CClientSocket* pClient = CClientSocket::getInstance();
-	CPacket pack(5, (BYTE*)&event, sizeof(event));
-	pClient->Send(pack);
+	event.nAction = 1;//双击
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 	CDialog::OnRButtonDown(nFlags, point);
 }
 
@@ -145,10 +155,9 @@ void CWatchDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
 	MOUSEEV event;
 	event.ptXY = remote;
 	event.nButton = 2;//右键
-	event.nAction = 3;//按下 TOOD 服务端要做对应的修改
-	CClientSocket* pClient = CClientSocket::getInstance();
-	CPacket pack(5, (BYTE*)&event, sizeof(event));
-	pClient->Send(pack);
+	event.nAction = 2;//按下 TOOD 服务端要做对应的修改
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 	CDialog::OnRButtonDblClk(nFlags, point);
 }
 
@@ -161,10 +170,9 @@ void CWatchDialog::OnRButtonUp(UINT nFlags, CPoint point)
 	MOUSEEV event;
 	event.ptXY = remote;
 	event.nButton = 2;//右键
-	event.nAction = 4;//抬起
-	CClientSocket* pClient = CClientSocket::getInstance();
-	CPacket pack(5, (BYTE*)&event, sizeof(event));
-	pClient->Send(pack);
+	event.nAction = 3;//抬起
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 	CDialog::OnRButtonUp(nFlags, point);
 }
 
@@ -176,11 +184,10 @@ void CWatchDialog::OnMouseMove(UINT nFlags, CPoint point)
 	//封装
 	MOUSEEV event;
 	event.ptXY = remote;
-	event.nButton = 0;//左键
-	event.nAction = 1;//双击
-	CClientSocket* pClient = CClientSocket::getInstance();
-	CPacket pack(5, (BYTE*)&event, sizeof(event));
-	pClient->Send(pack);
+	event.nButton = 8;//没有按键
+	event.nAction = 0;//移动
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();//TOOD 存在一个设计隐患，网络通信和对话框有耦合
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 	CDialog::OnMouseMove(nFlags, point);
 }
 
@@ -190,13 +197,12 @@ void CWatchDialog::OnStnClickedWatch()
 	CPoint point;
 	GetCursorPos(&point);
 	//坐标转换
-	CPoint remote = UserPoint2RemoteScreenPoint(point);
+	CPoint remote = UserPoint2RemoteScreenPoint(point,true);
 	//封装
 	MOUSEEV event;
 	event.ptXY = remote;
-	event.nButton = 0;//左键
-	event.nAction = 3;//按下
-	CClientSocket* pClient = CClientSocket::getInstance();
-	CPacket pack(5, (BYTE*)&event, sizeof(event));
-	pClient->Send(pack);
+	event.nButton = 1;//左键
+	event.nAction = 0;//单击
+	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+	pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 }
