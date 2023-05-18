@@ -256,6 +256,7 @@ void CRemoteClientDlg::threadWatchData()
 	} 
 	while (pClient == NULL);
 	while (!m_isClosed)
+	//for(;;)
 	{
 		if (m_isFull == false)//更新数据到缓存
 		{
@@ -563,6 +564,16 @@ LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 	}
 	break;
 	case 6:
+	{
+		ret = SendCommandPacket(cmd, wParam & 1);
+	}
+	break;
+	case 7:
+	{
+		ret = SendCommandPacket(cmd, wParam & 1);
+	}
+	break;
+	case 8:
 	{
 		ret = SendCommandPacket(cmd, wParam & 1);
 	}

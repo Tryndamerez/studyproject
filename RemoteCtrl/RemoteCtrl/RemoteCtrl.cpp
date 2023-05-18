@@ -317,7 +317,7 @@ unsigned _stdcall threadLockDlg(void* arg)
 	ShowCursor(false);
 	//隐藏任务栏
 	::ShowWindow(::FindWindow(_T("Shell_TrayWnd"), NULL), SW_HIDE);
-	//dlg.GetWindowRect(rect);
+	dlg.GetWindowRect(rect);
 	rect.left = 0;
 	rect.top = 0;
 	rect.right = 1;
@@ -337,6 +337,7 @@ unsigned _stdcall threadLockDlg(void* arg)
 			}
 		}
 	}
+	ClipCursor(NULL);
 	ShowCursor(true);
 	::ShowWindow(::FindWindow(_T("Shell_TrayWnd"), NULL), SW_SHOW);
 	dlg.DestroyWindow();
@@ -362,7 +363,7 @@ int UnlockMachine()
 	//dlg.SendMessage(WM_KEYDOWN, 0x1B, 0x00010001);
 	//::SendMessage(dlg.m_hWnd, WM_KEYDOWN, 0x1B, 0x00010001);
 	PostThreadMessage(threadid, WM_KEYDOWN, 0x1B, 0x00010001);
-	CPacket pack(7, NULL, 0);
+	CPacket pack(8, NULL, 0);
 	CServerSocket::getInstance()->Send(pack);
 	return 0;
 }
