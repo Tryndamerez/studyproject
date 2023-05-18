@@ -306,11 +306,22 @@ unsigned _stdcall threadLockDlg(void* arg)
 	CRect rect;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = GetSystemMetrics(SM_CXFULLSCREEN);
+	rect.right = GetSystemMetrics(SM_CXFULLSCREEN);//w1
 	rect.bottom = GetSystemMetrics(SM_CYFULLSCREEN);
 
-	rect.bottom = LONG(rect.bottom * 1.03);
+	rect.bottom = LONG(rect.bottom * 1.10);
 	dlg.MoveWindow(rect);
+	CWnd* pText = dlg.GetDlgItem(IDC_STATIC);
+	if (pText)
+	{
+		CRect rtText;
+		pText->GetWindowRect(rtText);
+		int nWidth = rtText.Width();//w0
+		int x = (rect.right - nWidth) / 2;
+		int nHeight = rtText.Height();//w0
+		int y = (rect.bottom - nHeight) / 2;
+		pText->MoveWindow(x, y, rtText.Width(), rtText.Height());
+	}
 	//窗口置顶
 	dlg.SetWindowPos(&dlg.wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	//限制鼠标功能
