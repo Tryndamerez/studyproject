@@ -260,5 +260,5 @@ void CWatchDialog::OnBnClickedButnLock()
 void CWatchDialog::OnBnClickedBtnUnlock()
 {
 	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
-	pParent->SendMessage(WM_SEND_PACKET, 8 << 1 | 1)；
+	pParent->SendMessage(WM_SEND_PACKET, 8 << 1 | 1);
 }
