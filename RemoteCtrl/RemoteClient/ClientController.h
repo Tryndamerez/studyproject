@@ -14,6 +14,10 @@
 #define WM_SEND_MESSAGE (WM_USER+0x1000) //自定义消息处理
 
 
+//业务逻辑和流程是随时可能发生变化的
+//业务逻辑和流程是随时可能发生变化的
+//业务逻辑和流程是随时可能发生变化的
+
 
 class CClientController
 {
@@ -60,46 +64,13 @@ public:
 	//1981 测试连接命令
 	//返回值：是命令号，小于0是错误
 
-	int SendCommandPacket(int nCmd, bool bAutoClose=true,BYTE* pData=NULL,size_t nLength=0)
-	{
-		CClientSocket* pClient = CClientSocket::getInstance();
-		if (pClient->Initsocket() == false) return false;
-		pClient->Send(CPacket(nCmd, pData, nLength));
-		int cmd = DealCommand();
-		TRACE("ack: %d\r\n", cmd);
-		if (bAutoClose)
-			CloseSocket();
-		return cmd;
-
-	}
-
+	int SendCommandPacket(int nCmd, bool bAutoClose = true, BYTE* pData = NULL, size_t nLength = 0);
 	int GetImage(CImage& image)
 	{
 		CClientSocket* pClient = CClientSocket::getInstance();
 		return CEdoyunTool::Bytes2Image(image, pClient->GetPacket().strData.c_str());
 	}
-
-	int DownFile(CString strPath)
-	{
-		CFileDialog dlg(FALSE, NULL, strPath, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, &m_remoteDlg);
-		if (dlg.DoModal() == IDOK)
-		{
-			m_strRemote = strPath;
-			m_strLocal = dlg.GetPathName();
-			m_hThreadDownload=(HANDLE)_beginthread(&CClientController::threadDownloadEntry, 0, this);
-			if (WaitForSingleObject(m_hThreadDownload, 0) != WAIT_TIMEOUT)
-			{
-				return -1;
-			}
-			m_remoteDlg.BeginWaitCursor();
-			m_statusDlg.m_info.SetWindowTextA(_T("命令正在执行中"));
-			m_statusDlg.ShowWindow(SW_SHOW);
-			m_statusDlg.CenterWindow(&m_remoteDlg);
-			m_statusDlg.SetActiveWindow();
-		}
-		return 0;
-	}
-
+	int DownFile(CString strPath);
 	void StartWatchScreen();
 protected:
 	void threadWatchScreen();
@@ -177,7 +148,7 @@ private:
 	public:
 		CHelper()
 		{
-			CClientController::getInstance();
+			//CClientController::getInstance();
 		}
 		~CHelper()
 		{
