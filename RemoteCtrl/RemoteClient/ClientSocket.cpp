@@ -30,3 +30,62 @@ void Dump(BYTE* pData, size_t nSize)
 	strOut += "\n";
 	OutputDebugStringA(strOut.c_str());
 }
+
+void CClientSocket::threadEntry(void* arg)
+{
+	CClientSocket* thiz = (CClientSocket*)arg;
+	thiz->threadFunc();
+
+}
+
+void CClientSocket::threadFunc()
+{
+	std::string strBuffer;
+	strBuffer.resize(BUFFER_SIZE);
+	char* pBuffer = (char*)strBuffer.c_str();
+	int index = 0;
+	while (m_sock != INVALID_SOCKET)
+	{
+		if (m_lstSend.size() > 0)
+		{
+			TRACE("lstSend size:%d\r\n", m_lstSend.size());
+			CPacket& head = m_lstSend.front();
+			if (Send(head) == false)
+			{
+				TRACE("∑¢ÀÕ ß∞‹£°\r\n");
+				continue;
+			}
+			auto pr = m_mapAck.insert(std::pair<HANDLE,std::list<CPacket>>(head.hEvent, std::list<CPacket>()));
+			int length = recv(m_sock, pBuffer + index, BUFFER_SIZE - index, 0);
+			if (length > 0 || index > 0)
+			{
+				index += length;
+				size_t size = (size_t)index;
+				CPacket pack((BYTE*)pBuffer, size);
+				if (size > 0)
+				{
+					pack.hEvent = head.hEvent;
+					pr.first->second.push_back(pack);
+					SetEvent(head.hEvent);
+				}
+				continue;
+			}
+			else if (length <= 0 && index <= 0)
+			{
+				CloseSocket();
+			}
+			m_lstSend.pop_front();
+		}
+		
+	}
+	CloseSocket();
+}
+
+bool CClientSocket::Send(const CPacket& pack)
+{
+	TRACE("m_sock:%d\r\n", m_sock);
+	if (m_sock == -1) return false;
+	std::string strOut;
+	pack.Data(strOut);
+	return send(m_sock, strOut.c_str(), strOut.size(), 0) > 0;
+}

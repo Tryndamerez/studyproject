@@ -3,6 +3,8 @@
 #include "framework.h"
 #include <string>
 #include <vector>
+#include <list>
+#include <map>
 
 #pragma warning(disable:4244)
 #pragma warning(disable:4267)
@@ -14,7 +16,7 @@ class CPacket
 {
 public:
 	CPacket() :sHead(0), nLength(0), sCmd(0), sSum(0) {}
-	CPacket(WORD nCmd, CONST byte* pData, size_t nSize)
+	CPacket(WORD nCmd, CONST byte* pData, size_t nSize,HANDLE hEvent)
 	{
 		sHead = 0xFEFF;
 		nLength = nSize + 4;
@@ -33,6 +35,7 @@ public:
 		{
 			sSum += BYTE(strData[j]) & 0xFF;
 		}
+		this->hEvent = hEvent;
 	}
 	CPacket(const CPacket& pack)
 	{
@@ -41,8 +44,9 @@ public:
 		sCmd = pack.sCmd;
 		strData = pack.strData;
 		sSum = pack.sSum;
+		hEvent = pack.hEvent;
 	}
-	CPacket(const BYTE* pData, size_t& nSize)
+	CPacket(const BYTE* pData, size_t& nSize):hEvent(INVALID_HANDLE_VALUE)
 	{
 		size_t i = 0;
 		for (; i < nSize; i++)
@@ -99,6 +103,7 @@ public:
 			sCmd = pack.sCmd;
 			strData = pack.strData;
 			sSum = pack.sSum;
+			hEvent = pack.hEvent;
 		}
 		return *this;
 	}
@@ -128,7 +133,7 @@ public:
 	WORD sCmd;//控制命令
 	std::string strData;//包数据
 	WORD sSum;//和校验
-	//std::string strOut;//整个包的数据
+	HANDLE  hEvent;
 };
 #pragma pack(pop)
 
@@ -231,19 +236,28 @@ public:
 		return -1;
 	}
 
-	bool Send(const char* pData, int nSize)
+	bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks)
 	{
-		if (m_sock == -1) return false;
-		return send(m_sock, pData, nSize, 0) > 0;
-	}
-
-	bool Send(const CPacket& pack)
-	{
-		TRACE("m_sock:%d\r\n", m_sock);
-		if (m_sock == -1) return false;
-		std::string strOut;
-		pack.Data(strOut);
-		return send(m_sock,strOut.c_str(),strOut.size(), 0) > 0;
+		if (m_sock == INVALID_SOCKET)
+		{
+			if(Initsocket() == false) return false;
+			_beginthread(CClientSocket::threadEntry, 0, this);
+		}	
+		m_lstSend.push_back(pack);
+		WaitForSingleObject(pack.hEvent, INFINITE);
+		std::map<HANDLE, std::list<CPacket >> ::iterator it;
+		it = m_mapAck.find(pack.hEvent);
+		if (it != m_mapAck.end())
+		{
+			std::list<CPacket>::iterator i;
+			for (i = it->second.begin(); i != it->second.end(); i++)
+			{
+				lstPacks.push_back(*i);
+			}
+			m_mapAck.erase(it);
+			return true;
+		}
+		return false;
 	}
 
 	bool GetFilePath(std::string& strPath)
@@ -278,10 +292,15 @@ public:
 	}
 	void UpdateAddress(int nIP, int nPort)
 	{
-		m_nIP = nIP;
-		m_nPort = nPort;
+		if((m_nIP != nIP) || (m_nPort != nPort))
+		{
+			m_nIP = nIP;
+			m_nPort = nPort;
+		}
 	}
 private:
+	std::list<CPacket> m_lstSend;
+	std::map<HANDLE, std::list<CPacket>> m_mapAck;
 	int m_nIP;//地址
 	int m_nPort;//端口
 	std::vector<char> m_buffer;
@@ -307,8 +326,11 @@ private:
 	~CClientSocket()
 	{
 		closesocket(m_sock);
+		m_sock = INVALID_SOCKET;
 		WSACleanup();
 	}
+	static void threadEntry(void* arg);
+	void threadFunc();
 	BOOL  InitSockEnv()
 	{
 		WSADATA data;
@@ -327,6 +349,14 @@ private:
 			delete tmp;
 		}
 	}
+
+	bool Send(const char* pData, int nSize)
+	{
+		if (m_sock == -1) return false;
+		return send(m_sock, pData, nSize, 0) > 0;
+	}
+
+	bool Send(const CPacket& pack);
 	static CClientSocket* m_instance;
 	class CHelper
 	{
