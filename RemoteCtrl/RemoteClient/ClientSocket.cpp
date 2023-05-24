@@ -38,11 +38,11 @@ bool CClientSocket::SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks
 		//if (Initsocket() == false) return false;
 		_beginthread(CClientSocket::threadEntry, 0, this);
 	}
-	auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>>(pack.hEvent,lstPacks));
+	auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>&>(pack.hEvent,lstPacks));
 	m_mapAutoClosed.insert(std::pair<HANDLE, bool>(pack.hEvent, isAutoClosed));
 	m_lstSend.push_back(pack);
 	WaitForSingleObject(pack.hEvent, INFINITE);
-	std::map<HANDLE, std::list<CPacket >> ::iterator it;
+	std::map<HANDLE, std::list<CPacket>&> ::iterator it;
 	it = m_mapAck.find(pack.hEvent);
 	if (it != m_mapAck.end())
 	{
@@ -78,38 +78,46 @@ void CClientSocket::threadFunc()
 				TRACE("发送失败！\r\n");
 				continue;
 			}
-			std::map<HANDLE, std::list<CPacket >> ::iterator it;
+			std::map<HANDLE, std::list<CPacket>&> ::iterator it;
 			it = m_mapAck.find(head.hEvent); 
-			std::map<HANDLE, bool> ::iterator it0 = m_mapAutoClosed.find(head.hEvent);
-			do 
+			if (it != m_mapAck.end())
 			{
-				int length = recv(m_sock, pBuffer + index, BUFFER_SIZE - index, 0);
-				if (length > 0 || index > 0)
+				std::map<HANDLE, bool> ::iterator it0 = m_mapAutoClosed.find(head.hEvent);
+				do
 				{
-					index += length;
-					size_t size = (size_t)index;
-					CPacket pack((BYTE*)pBuffer, size);
-					if (size > 0)
+					int length = recv(m_sock, pBuffer + index, BUFFER_SIZE - index, 0);
+					if (length > 0 || index > 0)
 					{
-						pack.hEvent = head.hEvent;
-						it->second.push_back(pack);
-						memmove(pBuffer, pBuffer + size, index - size);
-						index -= size;
-						if (it0->second == true)
+						index += length;
+						size_t size = (size_t)index;
+						CPacket pack((BYTE*)pBuffer, size);
+						if (size > 0)
 						{
-							SetEvent(head.hEvent);
+							pack.hEvent = head.hEvent;
+							it->second.push_back(pack);
+							memmove(pBuffer, pBuffer + size, index - size);
+							index -= size;
+							if (it0->second == true)
+							{
+								SetEvent(head.hEvent);
+							}
 						}
+						continue;
 					}
-					continue;
-				}
-				else if (length <= 0 && index <= 0)
-				{
-					CloseSocket();
-					SetEvent(head.hEvent);//等到服务器关闭命令之后，再通知事情完成
-				}
-			} while (it0->second==false);
+					else if (length <= 0 && index <= 0)
+					{
+						CloseSocket();
+						SetEvent(head.hEvent);//等到服务器关闭命令之后，再通知事情完成
+						m_mapAutoClosed.erase(it0);
+						break;
+					}
+				} while (it0->second == false);
+			}
 			m_lstSend.pop_front();
-			Initsocket();
+			if (Initsocket() == false)
+			{
+				Initsocket();
+			}
 		}	
 	}
 	CloseSocket();
