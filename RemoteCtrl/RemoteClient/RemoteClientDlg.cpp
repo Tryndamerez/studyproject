@@ -283,10 +283,6 @@ void CRemoteClientDlg::LoadFileInfo()
 			{
 				if ((CString(pInfo->szFileName) == ".") || (CString(pInfo->szFileName) == ".."))
 				{
-					int cmd = CClientController::getInstance()->DealCommand();
-					TRACE("ack:%d\r\n", cmd);
-					if (cmd < 0) break;
-					pInfo = (PFILEINFO)CClientSocket::getInstance()->GetPacket().strData.c_str();
 					continue;
 				}
 				HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);

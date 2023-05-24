@@ -76,7 +76,7 @@ bool CClientSocket::SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks
 	{
 		m_lock.lock();
 		m_mapAck.erase(it);
-		m_lock.lock();
+		m_lock.unlock();
 		return true;
 	}
 	return false;
