@@ -18,16 +18,10 @@ public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_REMOTECLIENT_DIALOG };
 #endif
-
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
-public:
-	CImage GetImage()
-	{
-		return m_image;
-	}
 private:
-	CImage m_image;//缓存
+	bool m_isClosed;//监控是否关闭
 private:
 	void LoadFileCurrent();
 	void LoadFileInfo();

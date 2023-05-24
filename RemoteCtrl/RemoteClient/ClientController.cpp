@@ -49,7 +49,8 @@ LRESULT CClientController::SendMessage(MSG msg)
 	if (hEvent == NULL) return -2;
 	MSGINFO info(msg);
 	PostThreadMessage(m_nThreadID, WM_SEND_MESSAGE, (WPARAM)&info, (LPARAM)hEvent);
-	WaitForSingleObject(hEvent, -1);
+	WaitForSingleObject(hEvent, INFINITE);
+	CloseHandle(hEvent);
 	return info.result;
 }
 
@@ -61,6 +62,7 @@ int CClientController::SendCommandPacket(int nCmd, bool bAutoClose, BYTE* pData,
 	if (plstPacks == NULL)
 		plstPacks = &lstPacks;
 	pClient->SendPacket(CPacket(nCmd, pData, nLength,hEvent), *plstPacks);
+	CloseHandle(hEvent);//回收资源句柄，防止卡死
 	if (plstPacks->size() > 0)
 	{
 			return plstPacks->front().sCmd;
@@ -111,7 +113,7 @@ void CClientController::threadWatchScreen()
 			int ret = SendCommandPacket(6, true, NULL, 0, &lstPacks);
 			if (ret == 6)
 			{
-				if (CEdoyunTool::Bytes2Image(m_remoteDlg.GetImage(), lstPacks.front().strData) == 0)
+				if (CEdoyunTool::Bytes2Image(m_watchDlg.GetImage(), lstPacks.front().strData) == 0)
 				{
 					m_watchDlg.SetImageStatus(true);
 				}
