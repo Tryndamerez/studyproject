@@ -131,18 +131,15 @@ LRESULT CWatchDialog::OnSendPackAck(WPARAM wParam, LPARAM lParam)
 			{
 			case 6:
 			{
-				if (m_isFull)
-				{
-					CEdoyunTool::Bytes2Image(m_image, pPacket->strData);
-					CRect rect;
-					m_picture.GetWindowRect(rect);
-					m_nObjWidth = m_image.GetWidth();
-					m_nObjHeight = m_image.GetHeight();
-					m_image.StretchBlt(m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
-					m_picture.InvalidateRect(NULL);
-					m_image.Destroy();
-					m_isFull = false;
-				}
+				CEdoyunTool::Bytes2Image(m_image, pPacket->strData);
+				CRect rect;
+				m_picture.GetWindowRect(rect);
+				m_nObjWidth = m_image.GetWidth();
+				m_nObjHeight = m_image.GetHeight();
+				m_image.StretchBlt(m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
+				m_picture.InvalidateRect(NULL);
+				m_image.Destroy();
+				m_isFull = false;
 				break;
 			}
 			case 5:

@@ -109,24 +109,22 @@ void CClientController::StartWatchScreen()
 void CClientController::threadWatchScreen()
 {
 	Sleep(50);
+	LONGLONG nTick = GetTickCount64();
 	while (!m_isClosed)
 	{
 		if (m_watchDlg.isFull()==false)
 		{
-			std::list<CPacket> lstPacks;
-			int ret = SendCommandPacket(m_watchDlg.GetSafeHwnd(),6, true, NULL, 0);
+			if (GetTickCount64() - nTick < 200)
+			{
+				Sleep(50 - (DWORD)(GetTickCount64() - nTick));
+			}
+			nTick = GetTickCount64();
+			int ret = SendCommandPacket(m_watchDlg.GetSafeHwnd(), 6, true, NULL, 0);
 			//TOOD 添加消息响应函数WM_SEND_PACK_ACK
 			//TOOD 控制消息发送频率
-			if (ret == 6)
+			if (ret == 1)
 			{
-				if (CEdoyunTool::Bytes2Image(m_watchDlg.GetImage(), lstPacks.front().strData) == 0)
-				{
-					m_watchDlg.SetImageStatus(true);
-				}
-				else
-				{
-					TRACE("获取图片失败 ret=%d\r\n",ret);
-				}
+				TRACE("成功设置照片 %08X\r\n");
 			}
 			else
 			{
