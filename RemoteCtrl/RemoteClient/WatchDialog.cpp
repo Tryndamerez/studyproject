@@ -127,7 +127,9 @@ LRESULT CWatchDialog::OnSendPackAck(WPARAM wParam, LPARAM lParam)
 		CPacket* pPacket = (CPacket*)wParam;
 		if (pPacket != NULL)
 		{
-			switch (pPacket->sCmd)
+			CPacket head = *(CPacket*)wParam;
+			delete (CPacket*)wParam;
+			switch (head.sCmd)
 			{
 			case 6:
 			{
@@ -143,6 +145,8 @@ LRESULT CWatchDialog::OnSendPackAck(WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case 5:
+				TRACE("远程端应答了鼠标移动\r\n");
+				break;
 			case 7:
 			case 8:
 			default:

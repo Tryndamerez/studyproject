@@ -82,11 +82,6 @@ int CClientController::DownFile(CString strPath)
 			return -1;
 		}
 		SendCommandPacket(m_remoteDlg, 4, false, (BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength(), (WPARAM)pFile);
-		//m_hThreadDownload = (HANDLE)_beginthread(&CClientController::threadDownloadEntry, 0, this);
-		//if (WaitForSingleObject(m_hThreadDownload, 0) != WAIT_TIMEOUT)
-		//{
-		//	return -1;
-		//}
 		m_remoteDlg.BeginWaitCursor();
 		m_statusDlg.m_info.SetWindowTextA(_T("命令正在执行中"));
 		m_statusDlg.ShowWindow(SW_SHOW);
@@ -116,7 +111,7 @@ void CClientController::threadWatchScreen()
 		{
 			if (GetTickCount64() - nTick < 200)
 			{
-				Sleep(50 - (DWORD)(GetTickCount64() - nTick));
+				Sleep(200 - (DWORD)(GetTickCount64() - nTick));
 			}
 			nTick = GetTickCount64();
 			int ret = SendCommandPacket(m_watchDlg.GetSafeHwnd(), 6, true, NULL, 0);
@@ -175,13 +170,13 @@ void CClientController::threadDownloadFile()
 			fwrite(pClient->GetPacket().strData.c_str(), 1, pClient->GetPacket().strData.size(), pFile);
 			nCount += pClient->GetPacket().strData.size();
 		}
-	} 
-	while (false);
+	} while (false);
 	fclose(pFile);
 	pClient->CloseSocket();
 	m_statusDlg.ShowWindow(SW_HIDE);
 	m_remoteDlg.EndWaitCursor();
 	m_remoteDlg.MessageBox(_T("下载完成!!"), _T("完成"));
+	m_remoteDlg.LoadFileInfo();
 }
 
 void CClientController::threadDownloadEntry(void* arg)
