@@ -55,9 +55,9 @@ public:
 	//7 锁机
 	//8 解锁
 	//1981 测试连接命令
-	//返回值：是命令号，小于0是错误
+	//返回值是状态 true成功 FALSE失败
 
-	int SendCommandPacket(int nCmd, bool bAutoClose = true, BYTE* pData = NULL, size_t nLength = 0, std::list<CPacket>* plstPacks=NULL);
+	bool SendCommandPacket(HWND hWnd, int nCmd, bool bAutoClose = true, BYTE* pData = NULL, size_t nLength = 0);
 	int GetImage(CImage& image)
 	{
 		CClientSocket* pClient = CClientSocket::getInstance();

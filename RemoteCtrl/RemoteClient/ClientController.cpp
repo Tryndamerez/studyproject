@@ -54,21 +54,10 @@ LRESULT CClientController::SendMessage(MSG msg)
 	return info.result;
 }
 
-int CClientController::SendCommandPacket(int nCmd, bool bAutoClose, BYTE* pData, size_t nLength, std::list<CPacket>* plstPacks)
+bool CClientController::SendCommandPacket(HWND hWnd, int nCmd, bool bAutoClose, BYTE* pData, size_t nLength)
 {
 	CClientSocket* pClient = CClientSocket::getInstance();
-	HANDLE hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	std::list<CPacket> lstPacks;//应答结果包
-	if (plstPacks == NULL)
-		plstPacks = &lstPacks;
-	pClient->SendPacket(CPacket(nCmd, pData, nLength,hEvent), *plstPacks, bAutoClose);
-	CloseHandle(hEvent);//回收资源句柄，防止卡死
-	if (plstPacks->size() > 0)
-	{
-			return plstPacks->front().sCmd;
-	}
-	return -1;
-
+	return pClient->SendPacket(hWnd,CPacket(nCmd, pData, nLength), bAutoClose);
 }
 
 int CClientController::DownFile(CString strPath)
@@ -110,7 +99,9 @@ void CClientController::threadWatchScreen()
 		if (m_watchDlg.isFull()==false)
 		{
 			std::list<CPacket> lstPacks;
-			int ret = SendCommandPacket(6, true, NULL, 0, &lstPacks);
+			int ret = SendCommandPacket(m_watchDlg.GetSafeHwnd(),6, true, NULL, 0);
+			//TOOD 添加消息响应函数WM_SEND_PACK_ACK
+			//TOOD 控制消息发送频率
 			if (ret == 6)
 			{
 				if (CEdoyunTool::Bytes2Image(m_watchDlg.GetImage(), lstPacks.front().strData) == 0)
@@ -121,6 +112,10 @@ void CClientController::threadWatchScreen()
 				{
 					TRACE("获取图片失败 ret=%d\r\n",ret);
 				}
+			}
+			else
+			{
+				TRACE("获取图片失败 ret=%d\r\n", ret);
 			}
 		}
 		Sleep(1);
@@ -147,7 +142,7 @@ void CClientController::threadDownloadFile()
 	CClientSocket* pClient = CClientSocket::getInstance();
 	do 
 	{
-		int ret = SendCommandPacket(4, false, (BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength());
+		int ret = SendCommandPacket(m_remoteDlg,4, false, (BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength());
 		long long nLength = *(long long*)CClientSocket::getInstance()->GetPacket().strData.c_str();
 		if (nLength == 0)
 		{
