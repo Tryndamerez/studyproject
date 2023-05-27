@@ -275,7 +275,7 @@ void CRemoteClientDlg::Str2Tree(const std::string& drivers, CTreeCtrl& tree)
 		{
 			dr += ":";
 			HTREEITEM hTemp = tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);
-			tree.InsertItem(NULL, hTemp, TVI_LAST);
+			tree.InsertItem("", hTemp, TVI_LAST);
 			dr.clear();
 			continue;
 		}
@@ -284,7 +284,7 @@ void CRemoteClientDlg::Str2Tree(const std::string& drivers, CTreeCtrl& tree)
 	if (drivers.size() > 0) {
 		dr += ":";
 		HTREEITEM hTemp = tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);
-		tree.InsertItem(NULL, hTemp, TVI_LAST);
+		tree.InsertItem("", hTemp, TVI_LAST);
 	}
 }
 
