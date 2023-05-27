@@ -196,16 +196,16 @@ void CRemoteClientDlg::DealCommand(WORD nCmd,const std::string& strData, LPARAM 
 		UpdateFileInfo(*(PFILEINFO)strData.c_str(), (HTREEITEM)lParam);
 		break;
 	case 3:
-		TRACE("runfile done!\r\n");
+		MessageBox("打开文件完成！", "操作成功", MB_ICONINFORMATION);
 		break;
 	case 4:
 		UpdateDownloadFile(strData, (FILE*)lParam);
 		break;
 	case 9:
-		TRACE("delete file done!\r\n");
+		MessageBox("删除文件完成！", "操作成功", MB_ICONINFORMATION);
 		break;
 	case 1981:
-		TRACE("test connection success!\r\n");
+		MessageBox("连接测试成功！", "连接成功", MB_ICONINFORMATION);
 		break;
 	default:
 		TRACE("unknow data received!\r\n", nCmd);
