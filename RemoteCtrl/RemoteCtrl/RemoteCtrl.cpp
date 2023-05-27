@@ -21,7 +21,10 @@
 CWinApp theApp;
 
 using namespace std;
-
+//开机启动的时候 程序的权限丝跟随启动用户的
+// 如果权限不同将导致启动失败
+//开机启动对环境变量有影响 如果依赖DLL则可能启动失败
+//复制这些dll到system35或者sysWOW64下边
 void ChooseAutoInvoke()
 {
 	CString strPath =(_T("C:\\Windows\\SysWOW64\\RemoteCtrl.exe"));
