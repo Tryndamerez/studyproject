@@ -101,7 +101,6 @@ void CWatchDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 	{
 		//坐标转换
 		CPoint remote = UserPoint2RemoteScreenPoint(point);
-		TRACE("x=%d y=%d\r\n", point.x, point.y);
 		//封装
 		MOUSEEV event;
 		event.ptXY = remote;
@@ -114,13 +113,13 @@ void CWatchDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 LRESULT CWatchDialog::OnSendPackAck(WPARAM wParam, LPARAM lParam)
 {
-	if ((lParam ==-1)||(lParam==-2))
+	if (lParam ==-1||(lParam==-2))
 	{
 		//TOOD 错误处理
 	}
 	else if (lParam == 1)
 	{
-
+		//对方关闭了套接字
 	}
 	else
 	{
@@ -133,15 +132,16 @@ LRESULT CWatchDialog::OnSendPackAck(WPARAM wParam, LPARAM lParam)
 			{
 			case 6:
 			{
-				CEdoyunTool::Bytes2Image(m_image, pPacket->strData);
+				CEdoyunTool::Bytes2Image(m_image, head.strData);
 				CRect rect;
 				m_picture.GetWindowRect(rect);
 				m_nObjWidth = m_image.GetWidth();
 				m_nObjHeight = m_image.GetHeight();
 				m_image.StretchBlt(m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
 				m_picture.InvalidateRect(NULL);
+				TRACE("更新图片完成%d %d %08X\r\n", m_nObjWidth, m_nObjHeight, (HBITMAP)m_image);
 				m_image.Destroy();
-				m_isFull = false;
+				//m_isFull = false;
 				break;
 			}
 			case 5:
@@ -161,8 +161,10 @@ void CWatchDialog::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	if ((m_nObjWidth != -1) && (m_nObjHeight != -1))
 	{
-		//坐标转换
+		TRACE("x=%d y=%d\r\n", point.x, point.y);
 		CPoint remote = UserPoint2RemoteScreenPoint(point);
+		TRACE("x=%d y=%d\r\n", point.x, point.y);
+		TRACE("remote:%d %d\r\n", remote.x, remote.y);
 		//封装
 		MOUSEEV event;
 		event.ptXY = remote;

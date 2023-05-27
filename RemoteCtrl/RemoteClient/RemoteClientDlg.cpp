@@ -281,7 +281,7 @@ void CRemoteClientDlg::Str2Tree(const std::string& drivers, CTreeCtrl& tree)
 		}
 		dr += drivers[i];
 	}
-	if (drivers.size() > 0) {
+	if (dr.size() > 0) {
 		dr += ":";
 		HTREEITEM hTemp = tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);
 		tree.InsertItem("", hTemp, TVI_LAST);
@@ -290,13 +290,13 @@ void CRemoteClientDlg::Str2Tree(const std::string& drivers, CTreeCtrl& tree)
 
 void CRemoteClientDlg::UpdateFileInfo(const FILEINFO& finfo,HTREEITEM hParent)
 {
+	TRACE("hasnext %d isdirectory %d %s\r\n", finfo.HasNext, finfo.IsDirectory, finfo.szFileName);
 	if (finfo.HasNext == FALSE) return;
 	if (finfo.IsDirectory)
 	{
 		if ((CString(finfo.szFileName) == ".") || (CString(finfo.szFileName) == ".."))
-		{
 			return;
-		}
+		TRACE("hselected %08X %08X\r\n", hParent, m_Tree.GetSelectedItem());
 		HTREEITEM hTemp = m_Tree.InsertItem(finfo.szFileName, hParent);
 		m_Tree.InsertItem("", hTemp, TVI_LAST);
 		m_Tree.Expand(hParent, TVE_EXPAND);
@@ -310,6 +310,7 @@ void CRemoteClientDlg::UpdateFileInfo(const FILEINFO& finfo,HTREEITEM hParent)
 void CRemoteClientDlg::UpdateDownloadFile(const std::string& strData, FILE* pFile)
 {
 	static LONGLONG length = 0, index = 0;
+	TRACE("length %d index %d\r\n", length, index);
 	if (length == 0)
 	{
 		length = *(long long*)strData.c_str();
@@ -331,6 +332,7 @@ void CRemoteClientDlg::UpdateDownloadFile(const std::string& strData, FILE* pFil
 	{
 		fwrite(strData.c_str(), 1,strData.size(), pFile);
 		index += strData.size();
+		TRACE("index = %d\r\n", index);
 		if (index >= length)
 		{
 			fclose(pFile);
@@ -352,6 +354,7 @@ void CRemoteClientDlg::LoadFileInfo()
 	DeleteTreeChileItem(hTreeSelected);
 	m_List.DeleteAllItems();
 	CString strPath = GetPath(hTreeSelected);
+	TRACE("hTreeSelected %08X\r\n", hTreeSelected);
 	CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(), 2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength(), (WPARAM)hTreeSelected);
 }
 
@@ -485,7 +488,7 @@ void CRemoteClientDlg::OnIpnFieldchangedIpaddressServ(NMHDR* pNMHDR, LRESULT* pR
 	*pResult = 0;
 	UpdateData();
 	CClientController* pController = CClientController::getInstance();
-	pController->UpdateAddress(m_server_address,atoi((LPCSTR)m_nPort));
+	pController->UpdateAddress(m_server_address,atoi((LPCTSTR)m_nPort));
 }
 
 
@@ -493,7 +496,7 @@ void CRemoteClientDlg::OnEnChangeEditPort()
 {
 	UpdateData();
 	CClientController* pController = CClientController::getInstance();
-	pController->UpdateAddress(m_server_address, atoi((LPCSTR)m_nPort));
+	pController->UpdateAddress(m_server_address, atoi((LPCTSTR)m_nPort));
 }
 
 LRESULT CRemoteClientDlg::OnSendPackAck(WPARAM wParam, LPARAM lParam)
