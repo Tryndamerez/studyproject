@@ -6,6 +6,7 @@
 #include "RemoteCtrl.h"
 #include "ServerSocket.h"
 #include "Command.h"
+#include <conio.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -23,11 +24,12 @@ CWinApp theApp;
 
 using namespace std;
 
+//业务通用
 bool ChooseAutoInvoke(const CString& strPath)
 {
 	if (PathFileExists(strPath))
 	{
-		return;
+		return true;
 	}
 	CString strInfo = _T("该程序只允许用于合法的用途\n");
 	strInfo += _T("继续运行该程序将使该机器处于被监控状态\n");
@@ -38,7 +40,7 @@ bool ChooseAutoInvoke(const CString& strPath)
 	if (ret == IDYES)
 	{
 		//WriteRegisterTable();
-		if (!CEdoyunTool::WriteStartupDir(strPath))
+		if(!CEdoyunTool::WriteStartupDir(strPath))
 		{
 			MessageBox(NULL, _T("复制文件失败，是否权限不足？\r\n"), _T("错误"), MB_ICONERROR | MB_TOPMOST);
 			return false;
@@ -51,55 +53,153 @@ bool ChooseAutoInvoke(const CString& strPath)
 	return true;
 }
 
-bool Init()
+#define IOCP_LIST_EMPTY 0
+#define IOCP_LIST_PUSH 1
+#define IOCP_LIST_POP 2
+
+enum
 {
-	HMODULE hModule = ::GetModuleHandle(nullptr);
-	if (hModule != nullptr)
+	IocpListEmpty,
+	IocpListPush,
+	IocpListPop,
+};
+
+typedef struct IocpParam
+{
+	int nOperator;//操作
+	std::string strData;//数据
+	_beginthread_proc_type cbFunc;
+	IocpParam(int op, const char* sData, _beginthread_proc_type cb = NULL)
 	{
-		wprintf(L"错误: GetModuleHandle 失败\n");
-		return false;
+		nOperator = op;
+		strData = sData;
+		cbFunc = cb;
 	}
-	if (!AfxWinInit(hModule, nullptr, ::GetCommandLine(), 0))
+	IocpParam()
 	{
-		// TODO: 在此处为应用程序的行为编写代码。
-		wprintf(L"错误: MFC初始化失败\n");
-		return false;
+		nOperator = -1;
 	}
-	return true;
+}IOCP_PARAM;
+
+void threadQueueEntry(HANDLE hICOP)
+{
+	std::list<std::string> lstString;
+	DWORD dwTransferred = 0;
+	ULONG_PTR ComplextionKey = 0;
+	OVERLAPPED* pOverlapped = NULL;
+	while (GetQueuedCompletionStatus(hICOP, &dwTransferred, &ComplextionKey, &pOverlapped, INFINITE))
+	{
+		if (dwTransferred == 0 && (ComplextionKey == NULL))
+		{
+			printf("thread is prepare to exit!\r\n");
+			break;
+		}
+		IOCP_PARAM* pParam = (IOCP_PARAM*)ComplextionKey;
+		if (pParam->nOperator == IocpListPush)
+		{
+			lstString.push_back(pParam->strData);
+		}
+		else if (pParam->nOperator == IocpListPop)
+		{
+			std::string* pStr = NULL;
+			if (lstString.size() > 0)
+			{
+				pStr = new std::string(lstString.front());
+				lstString.pop_front();
+			}
+			if (pParam->cbFunc)
+			{
+				pParam->cbFunc(pStr);
+			}
+		}
+		else if (pParam->nOperator == IocpListEmpty)
+		{
+			lstString.clear();
+		}
+		delete pParam;
+	}
+	
+	_endthread();
 }
+
+void func(void* arg)
+{
+	std::string* pstr = (std::string*)arg;
+	if (pstr == NULL)
+	{
+		printf("pop from list:%s\r\n", pstr->c_str());
+		delete pstr;
+	}
+	else
+	{
+		printf("list is empty,no data!\r\n");
+	}
+
+}
+
 
 int main()
 {
-	if (CEdoyunTool::IsAdmin())
+	if (!CEdoyunTool::Init()) return 1;
+	
+	printf("press any key to exit...\r\n");
+	HANDLE hIOCP = INVALID_HANDLE_VALUE;//I/O Completion Port
+	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
+	HANDLE hThread=(HANDLE)_beginthread(threadQueueEntry, 0, hIOCP);
+	
+	ULONGLONG tick = GetTickCount64();
+	while (_kbhit()!=0)
 	{
-		if (!Init()) return 1;
-		OutputDebugString("current is run as administrator!\r\n");
-		CCommand cmd;
-		if (ChooseAutoInvoke(INVOKE_PATH) == false)
+		if (GetTickCount64() - tick > 1300)
 		{
-			::exit(0);
+			PostQueuedCompletionStatus(hIOCP, sizeof(IOCP_PARAM), (ULONG_PTR)new IOCP_PARAM(IocpListPop, "hello world"), NULL);
+			tick = GetTickCount64();
 		}
-		int ret = CServerSocket::getInstance()->Run(&CCommand::RunCommand, &cmd);
-		switch (ret)
+		if (GetTickCount64() - tick > 2000)
 		{
-		case -1:
-			MessageBox(NULL, _T("网络初始化异常，未能正常初始化，请检查网络状态！"), _T("网络初始化失败"), MB_OK | MB_ICONERROR);
-			::exit(0);
-			break;
-		case -2:
-			MessageBox(NULL, _T("多次无法正常接入用户，结束程序"), _T("接入用户失败"), MB_OK | MB_ICONERROR);
-			::exit(0);
-			break;
+			PostQueuedCompletionStatus(hIOCP, sizeof(IOCP_PARAM), (ULONG_PTR)new IOCP_PARAM(IocpListPush, "hello world"), NULL);
+			tick = GetTickCount64();
+		}
+		Sleep(1);
+	}
+
+	if (hIOCP != NULL)
+	{
+		PostQueuedCompletionStatus(hIOCP, 0, NULL, NULL);
+		WaitForSingleObject(hIOCP, INFINITE);
+	}
+
+	CloseHandle(hIOCP);
+
+	printf("exit done!\r\n");
+	::exit(0);
+	
+	/*if (CEdoyunTool::IsAdmin())
+	{
+		if (!CEdoyunTool::Init()) return 1;
+		if (ChooseAutoInvoke(INVOKE_PATH))
+		{
+			CCommand cmd;
+			int ret = CServerSocket::getInstance()->Run(&CCommand::RunCommand, &cmd);
+			switch (ret)
+			{
+			case -1:
+				MessageBox(NULL, _T("网络初始化异常，未能正常初始化，请检查网络状态！"), _T("网络初始化失败"), MB_OK | MB_ICONERROR);
+				break;
+			case -2:
+				MessageBox(NULL, _T("多次无法正常接入用户，结束程序"), _T("接入用户失败"), MB_OK | MB_ICONERROR);
+				break;
+			}
 		}
 	}
 	else
 	{
-		OutputDebugString("current is run as normal user!\r\n");
 		if (CEdoyunTool::RunAsAdmin() == false)
 		{
 			CEdoyunTool::ShowError();
+			return 1;
 		}
-		return 0;
 	}
+	*/
 	return 0;
 }
