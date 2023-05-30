@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CEdoyunQueue.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="EdoyunTool.h" />
     <ClInclude Include="framework.h" />

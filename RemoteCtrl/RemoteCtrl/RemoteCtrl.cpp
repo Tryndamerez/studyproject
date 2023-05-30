@@ -7,6 +7,7 @@
 #include "ServerSocket.h"
 #include "Command.h"
 #include <conio.h>
+#include "CEdoyunQueue.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -90,7 +91,7 @@ void threadmain(HANDLE hIOCP)
 	int count = 0, count0 = 0, total = 0;
 	while (GetQueuedCompletionStatus(hIOCP, &dwTransferred, &ComplextionKey, &pOverlapped, INFINITE))
 	{
-		if (dwTransferred == 0 && (ComplextionKey == NULL))
+		if ((dwTransferred == 0) || (ComplextionKey == NULL))
 		{
 			printf("thread is prepare to exit!\r\n");
 			break;
@@ -103,7 +104,7 @@ void threadmain(HANDLE hIOCP)
 		}
 		else if (pParam->nOperator == IocpListPop)
 		{
-			std::string str = NULL;
+			std::string str;
 			if (lstString.size() > 0)
 			{
 				str = lstString.front();
@@ -154,44 +155,29 @@ int main()
 	if (!CEdoyunTool::Init()) return 1;
 	
 	printf("press any key to exit...\r\n");
-	HANDLE hIOCP = INVALID_HANDLE_VALUE;//I/O Completion Port
-	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
-	if (hIOCP == INVALID_HANDLE_VALUE || (hIOCP == NULL))
-	{
-		printf("create iocp failed!%d\r\n", GetLastError());
-		return 1;
-	}
-	HANDLE hThread=(HANDLE)_beginthread(threadQueueEntry, 0, hIOCP);
-	
-	ULONGLONG tick = GetTickCount64();
-	ULONGLONG tick0 = GetTickCount64();
-	int count = 0, count0 = 0;
+
+	CEdoyunQueue<std::string> lstString;
+	ULONGLONG tick0 = GetTickCount64(), tick = GetTickCount64();
 	while (_kbhit()!=0)
 	{
 		if (GetTickCount64() - tick0 > 1300)
 		{
-			PostQueuedCompletionStatus(hIOCP, sizeof(IOCP_PARAM), (ULONG_PTR)new IOCP_PARAM(IocpListPop, "hello world", func), NULL);
+			lstString.PushBack("hello world");
 			tick0 = GetTickCount64();
-			count0++;
 		}
 		if (GetTickCount64() - tick > 2000)
 		{
-			PostQueuedCompletionStatus(hIOCP, sizeof(IOCP_PARAM), (ULONG_PTR)new IOCP_PARAM(IocpListPush, "hello world"), NULL);
+			std::string str;
+			lstString.PopFront(str);
 			tick = GetTickCount64();
-			count++;
+			printf("pop from queue:%s\r\n", str.c_str());
 		}
 		Sleep(1);
 	}
-	printf("count %d count0 %d\r\n", count, count0);
-	if (hIOCP != NULL)
-	{
-		PostQueuedCompletionStatus(hIOCP, 0, NULL, NULL);
-		WaitForSingleObject(hIOCP, INFINITE);
-	}
 
-	CloseHandle(hIOCP);
-
-	printf("exit done! count %d count0 %d\r\n", count, count0);
+	printf("exit done!size %d\r\n",lstString.Size());
+	lstString.Clear();
+	printf("exit done!size %d\r\n", lstString.Size());
 	::exit(0);
 	
 	/*if (CEdoyunTool::IsAdmin())
