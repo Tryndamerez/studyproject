@@ -178,7 +178,6 @@ int main()
 	printf("exit done!size %d\r\n",lstString.Size());
 	lstString.Clear();
 	printf("exit done!size %d\r\n", lstString.Size());
-	::exit(0);
 	
 	/*if (CEdoyunTool::IsAdmin())
 	{
