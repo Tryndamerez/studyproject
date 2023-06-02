@@ -8,6 +8,8 @@
 #include "Command.h"
 #include <conio.h>
 #include "CEdoyunQueue.h"
+#include <MSWSock.h>
+#include "EdoyunServer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -54,131 +56,14 @@ bool ChooseAutoInvoke(const CString& strPath)
 	return true;
 }
 
-#define IOCP_LIST_EMPTY 0
-#define IOCP_LIST_PUSH 1
-#define IOCP_LIST_POP 2
-
-enum
-{
-	IocpListEmpty,
-	IocpListPush,
-	IocpListPop,
-};
-
-typedef struct IocpParam
-{
-	int nOperator;//操作
-	std::string strData;//数据
-	_beginthread_proc_type cbFunc;
-	IocpParam(int op, const char* sData, _beginthread_proc_type cb = NULL)
-	{
-		nOperator = op;
-		strData = sData;
-		cbFunc = cb;
-	}
-	IocpParam()
-	{
-		nOperator = -1;
-	}
-}IOCP_PARAM;
-
-void threadmain(HANDLE hIOCP)
-{
-	std::list<std::string> lstString;
-	DWORD dwTransferred = 0;
-	ULONG_PTR ComplextionKey = 0;
-	OVERLAPPED* pOverlapped = NULL;
-	int count = 0, count0 = 0, total = 0;
-	while (GetQueuedCompletionStatus(hIOCP, &dwTransferred, &ComplextionKey, &pOverlapped, INFINITE))
-	{
-		if ((dwTransferred == 0) || (ComplextionKey == NULL))
-		{
-			printf("thread is prepare to exit!\r\n");
-			break;
-		}
-		IOCP_PARAM* pParam = (IOCP_PARAM*)ComplextionKey;
-		if (pParam->nOperator == IocpListPush)
-		{
-			lstString.push_back(pParam->strData);
-			count++;
-		}
-		else if (pParam->nOperator == IocpListPop)
-		{
-			std::string str;
-			if (lstString.size() > 0)
-			{
-				str = lstString.front();
-				lstString.pop_front();
-			}
-			if (pParam->cbFunc)
-			{
-				pParam->cbFunc(&str);
-			}
-			count0++;
-		}
-		else if (pParam->nOperator == IocpListEmpty)
-		{
-			lstString.clear();
-		}
-		delete pParam;
-		printf("total %d\r\n", ++total);
-	}
-	lstString.clear();
-	printf("count %d count0 %d\r\n", count, count0);
-}
-
-
-void threadQueueEntry(HANDLE hIOCP)
-{
-	threadmain(hIOCP);
-	_endthread();
-}
-
-void func(void* arg)
-{
-	std::string* pstr = (std::string*)arg;
-	if (pstr == NULL)
-	{
-		printf("pop from list:%s\r\n", pstr->c_str());
-		//delete pstr;
-	}
-	else
-	{
-		printf("list is empty,no data!\r\n");
-	}
-
-}
-
+void iocp();
 
 int main()
 {
 	if (!CEdoyunTool::Init()) return 1;
-	
-	printf("press any key to exit...\r\n");
 
-	CEdoyunQueue<std::string> lstString;
-	ULONGLONG tick0 = GetTickCount64(), tick = GetTickCount64();
-	while (_kbhit()!=0)
-	{
-		if (GetTickCount64() - tick0 > 1300)
-		{
-			lstString.PushBack("hello world");
-			tick0 = GetTickCount64();
-		}
-		if (GetTickCount64() - tick > 2000)
-		{
-			std::string str;
-			lstString.PopFront(str);
-			tick = GetTickCount64();
-			printf("pop from queue:%s\r\n", str.c_str());
-		}
-		Sleep(1);
-	}
+	iocp();
 
-	printf("exit done!size %d\r\n",lstString.Size());
-	lstString.Clear();
-	printf("exit done!size %d\r\n", lstString.Size());
-	
 	/*if (CEdoyunTool::IsAdmin())
 	{
 		if (!CEdoyunTool::Init()) return 1;
@@ -207,4 +92,25 @@ int main()
 	}
 	*/
 	return 0;
+}
+
+class COverlapped
+{
+public:
+	OVERLAPPED m_overlapped;
+	DWORD m_operator;
+	char m_buffer[4096];
+	COverlapped()
+	{
+		m_operator = 0;
+		memset(&m_overlapped, 0, sizeof(OVERLAPPED));
+		memset(m_buffer, 0, sizeof(m_buffer));
+	}
+};
+
+void iocp()
+{
+	EdoyunServer server;
+	server.StartService();
+	getchar();
 }
