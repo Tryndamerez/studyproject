@@ -1,0 +1,42 @@
+﻿  pch.cpp
+  Command.cpp
+  EdoyunServer.cpp
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(208,1): warning C4407: 在指向成员表示形式的不同指针之间进行强制转换，编译器可能生成不正确的代码
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(204,2): message : 在编译 类 模板 成员函数“EdoyunSendQueue<std::vector<char,std::allocator<char>>>::EdoyunSendQueue(ThreadFuncBase *,int (__thiscall ThreadFuncBase::* )(T &))”时
+          with
+          [
+              T=std::vector<char,std::allocator<char>>
+          ]
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\EdoyunServer.cpp(64,11): message : 请参阅 "EdoyunClient::EdoyunClient" 中对 "EdoyunSendQueue<std::vector<char,std::allocator<char>>>::EdoyunSendQueue" 的第一个引用
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(279,57): message : 查看对正在编译的 类 模板 实例化“EdoyunSendQueue<std::vector<char,std::allocator<char>>>”的引用
+  EdoyunTool.cpp
+  ENetwork.cpp
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.h(33,19): error C2535: “EServerParamter &EServerParamter::operator <<(SendFunc)”: 已经定义或声明成员函数
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.h(31,19): message : 参见“EServerParamter::operator <<”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.h(42,19): error C2535: “EServerParamter &EServerParamter::operator >>(SendFunc &)”: 已经定义或声明成员函数
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.h(40,19): message : 参见“EServerParamter::operator >>”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(21,3): error C2561: “EServer::Invoke”: 函数必须返回值
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(16,14): message : 参见“EServer::Invoke”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(23,7): error C2039: "list": 不是 "std" 的成员
+D:\visual\VC\Tools\MSVC\14.36.32532\include\mutex(30,1): message : 参见“std”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(23,11): error C2065: “list”: 未声明的标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(23,12): error C2275: “ESockaddrIn”: 应为表达式而不是类型
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(23,25): error C2065: “lstclients”: 未声明的标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(27,3): error C2561: “EServer::Invoke”: 函数必须返回值
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(16,14): message : 参见“EServer::Invoke”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(32,10): error C3861: “_kbhit”: 找不到标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(35,8): error C2065: “lstclients”: 未声明的标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(36,5): error C2065: “lstclients”: 未声明的标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(42,24): error C2065: “lstclients”: 未声明的标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(42,44): error C2065: “lstclients”: 未声明的标识符
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(42,8): error C2660: “EBuffer::Update”: 函数不接受 1 个参数
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ESocket.h(90,7): message : 参见“EBuffer::Update”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetwork.cpp(42,8): message : 尝试匹配参数列表“()”时
+  LockDialog.cpp
+  RemoteCtrl.cpp
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetWork.h(33,19): error C2535: “EServerParamter &EServerParamter::operator <<(SendFunc)”: 已经定义或声明成员函数
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetWork.h(31,19): message : 参见“EServerParamter::operator <<”的声明
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetWork.h(42,19): error C2535: “EServerParamter &EServerParamter::operator >>(SendFunc &)”: 已经定义或声明成员函数
+D:\yuankong\studyproject\RemoteCtrl\RemoteCtrl\ENetWork.h(40,19): message : 参见“EServerParamter::operator >>”的声明
+  ServerSocket.cpp
+  正在生成代码...
