@@ -35,6 +35,6 @@ public:
 	~RTPHelper();
 	int SendMedialFrame(EBuffer& frame);
 private:
-
+	int GetFrameSepSize(EBuffer& frame);
 };
 
