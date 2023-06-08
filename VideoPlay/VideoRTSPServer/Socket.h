@@ -1,8 +1,9 @@
 #pragma once
 #include <WinSock2.h>
-#include <share.h>
 #include <string>
-#pragma warning(disable 6031)
+#include <memory>
+#pragma warning(disable:6031)
+#pragma comment(lib,"ws2_32.lib")
 
 class EBuffer :public std::string
 {
@@ -31,6 +32,41 @@ public:
 	void Update(void* buffer, size_t size) {
 		resize(size);
 		memcpy((void*)c_str(), buffer, size);
+	}
+	void Zero() {
+		if (size() > 0) memset((void*)c_str(), 0, size());
+	}
+	EBuffer& operator<<(const EBuffer& str){
+		if (this != str) {
+			*this += str;
+		}
+		else {
+			EBuffer tmp = str;
+			*this += tmp;
+		}
+		return *this;
+	}
+	EBuffer& operator<<(const std::string& str) {
+		*this += str;
+		return *this;
+	}
+	EBuffer& operator<<(const char* str) {
+		*this += str;
+		return *this;
+	}
+	EBuffer& operator<<(int data) {
+		char s[16] = "";
+		snprintf(s, sizeof(s), "%d", data);
+		*this += s;
+		return *this;
+	}
+	const EBuffer& operator>>(int& data) const {
+		data = atoi(c_str());
+		return *this;
+	}
+	const EBuffer& operator>>(short& data) const{
+		data = (short)atoi(c_str());
+		return *this;
 	}
 };
 
@@ -177,8 +213,15 @@ public:
 	}
 
 	int Send(const EBuffer& buffer) {
-		//TOOD
-		return  send(*m_socket, buffer, buffer.size(), 0);
+		int index = 0;
+		char* pData = buffer;
+		while (index < (int)buffer.size()) {
+			int ret = send(*m_socket, buffer, buffer.size(), 0);
+			if (ret < 0) return ret;
+			if (ret == 0) break;
+			index += ret;
+		}
+		return  index;
 	}
 
 	void Close() {

@@ -4,17 +4,23 @@
 #include <mutex>
 #include <Windows.h>
 #include <varargs.h>
-void ETrace(const char* format, ...) {
-	va_list ap;
-	va_start(ap, format);
-	std::string sBuffer;
-	sBuffer.resize(1024.10);
-	vsprintf((char*)(sBuffer.c_str()), format, ap);
-	OutputDebugStringA(sBuffer.c_str());
-	va_end(ap);
-}
-#ifdef TRACE
-#define TRACE ETrace
+
+class ETool
+{
+public:
+	static void ETrace(const char* format, ...) {
+		va_list ap;
+		va_start(ap, format);
+		std::string sBuffer;
+		sBuffer.resize(1024 * 10);
+		vsprintf((char*)(sBuffer.c_str()), format, ap);
+		OutputDebugStringA(sBuffer.c_str());
+		va_end(ap);
+	}
+};
+
+#ifndef TRACE
+#define TRACE ETool::ETrace
 #endif
 
 class ThreadFuncBase {};
