@@ -50,7 +50,7 @@ void MidealFile::Reset()
 	}
 }
 
-long MidealFile::FindH264Head()
+long MidealFile::FindH264Head(int& headsize)
 {
 	while (!feof(m_file)) {
 		char c = 0x7F;
@@ -63,11 +63,13 @@ long MidealFile::FindH264Head()
 			if (c == 0) {
 				c = fgetc(m_file);
 				if (c == 1) {//找到了一个头
+					headsize = 3;
 					return ftell(m_file) - 3;
 				}
 				else if (c == 0) {
 					c = fgetc(m_file);
 					if (c == 1) {//又找到了一个头
+						headsize = 4;
 						return ftell(m_file) - 4;
 					}
 				}
@@ -80,13 +82,14 @@ long MidealFile::FindH264Head()
 EBuffer MidealFile::ReadH264Frame()
 {
 	if (m_file) {
-		long off = FindH264Head();
+		int headsize = 0;
+		long off = FindH264Head(headsize);
 		if (off == -1) return EBuffer();
-		fseek(m_file, off + 3, SEEK_SET);
-		long tail = FindH264Head();
+		fseek(m_file, off + headsize, SEEK_SET);
+		long tail = FindH264Head(headsize);
 		if (tail == -1) tail = m_size;
 		long size = tail - off;
-		fseek(m_file, off + 3, SEEK_SET);
+		fseek(m_file, off, SEEK_SET);
 		EBuffer result(size);
 		fread(result, 1, size, m_file);
 		return result;

@@ -2,8 +2,8 @@
 #include <rpc.h>
 #pragma comment(lib,"rpcrt4.lib")
 
-Socketiniter RTSPServer::m_initer;
 
+Socketiniter RTSPServer::m_initer;
 
 int RTSPServer::Init(const std::string& strIP, short port)
 {
@@ -48,9 +48,25 @@ int RTSPServer::ThreadSession()
 { 
     RTSPSession session;
     if (m_lstSession.PopFront(session)) {
-        return session.PickRequestAndReply();
+        int ret = session.PickRequestAndReply(RTSPServer::PlayCallBack,this);
+        return ret;
     }
     return -1;
+}
+
+void RTSPServer::PlayCallBack(RTSPServer* thiz, RTSPSession& session)
+{
+    thiz->UdpWorker(session.GetClientUDPAddress());
+}
+
+void RTSPServer::UdpWorker(const EAddress& client)
+{
+    EBuffer frame = m_h264.ReadOneFrame();
+    RTPFrame rtp;
+    while (frame.size() > 0) {
+        m_helper.SendMedialFrame(rtp, frame, client);
+        frame = m_h264.ReadOneFrame();
+    }
 }
 
 RTSPSession::RTSPSession()
@@ -69,12 +85,14 @@ RTSPSession::RTSPSession(const ESocket& client) :m_client(client)
     UuidCreate(&uuid);
     m_id.resize(8);
     snprintf((char*)m_id.c_str(), m_id.size(), "%u%u", uuid.Data1, uuid.Data2);
+    m_port = -1;
 }
 
 RTSPSession::RTSPSession(const RTSPSession& session)
 {
     m_id = session.m_id;
     m_client = session.m_client;
+    m_port = session.m_port;
 }
 
 RTSPSession& RTSPSession::operator=(const RTSPSession& session)
@@ -82,11 +100,12 @@ RTSPSession& RTSPSession::operator=(const RTSPSession& session)
     if (this != &session) {
 		m_id = session.m_id;
 		m_client = session.m_client;
+        m_port = session.m_port;
     }
     return *this;
 }
 
-int RTSPSession::PickRequestAndReply()
+int RTSPSession::PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz)
 {
     int ret = -1;
     do {
@@ -99,9 +118,24 @@ int RTSPSession::PickRequestAndReply()
         }
         RTSPReply rep = Reply(req);
         ret = m_client.Send(rep.toBuffer());
+        if (req.method() == 2) {
+            m_port = (short)atoi(req.port());
+        }
+        if (req.method() == 3) {
+            cb(thiz, *this);
+        }
     } while (ret >= 0);
     if (ret < 0) return ret;
     return 0;
+}
+
+EAddress RTSPSession::GetClientUDPAddress() const
+{
+    EAddress addr;
+    int len = addr.Size();
+    getsockname(m_client, addr, &len);
+    addr = m_port;
+    return addr;
 }
 
 EBuffer RTSPSession::PickOneLine(EBuffer& buffer)
@@ -164,7 +198,11 @@ RTSPRequest RTSPSession::AnalysRequest(const EBuffer& buffer)
         return request;
     }
     else if (strcmp(method, "SETUP") == 0) {
-        line = PickOneLine(data);
+        do {
+            line = PickOneLine(data);
+            if (strstr((const char*)line, "clinet_port=") == NULL) continue;
+            break;
+        } while (line.size() > 0);
         int port[2] = { 0,0 };
         if (sscanf(line, "Transport: RTP/AVP;unicast;client_port=%d-%d\r\n", port, port + 1) == 2) {
             request.SetClientPort(port);
@@ -203,6 +241,7 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
         sdp << "v=0\r\n";
         sdp << "o=- " << (char*)m_id << " 1 IN IP4 192.168.153.1";
         sdp << "t=0 0\r\n" << "a=control:*\r\n" << "m=video 0 RTP/AVP 96\r\n";
+        sdp << "a=framerate:24\r\n";
         sdp << "a=rtpmap:96 H264/90000\r\n" << "a=control:track0\r\n";
         reply.SetSdp(sdp);
     }

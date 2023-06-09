@@ -1,5 +1,6 @@
 #pragma once
 #include "base.h"
+
 class MidealFile
 {
 public:
@@ -13,7 +14,7 @@ public:
 	void Reset();
 private:
 	//返回-1 表示查找失败
-	long FindH264Head();
+	long FindH264Head(int& headsize);
 	EBuffer ReadH264Frame();
 private:
 	long m_size;
