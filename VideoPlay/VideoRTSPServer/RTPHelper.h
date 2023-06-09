@@ -33,7 +33,7 @@ public:
 class RTPHelper
 {
 public:
-	RTPHelper():timestamp(0),m_udp(false){
+	RTPHelper() :timestamp(0), m_udp(false) {
 		m_udp.Bind(EAddress("0.0.0.0", (short)55000));
 	}
 	~RTPHelper(){}

@@ -134,6 +134,7 @@ EAddress RTSPSession::GetClientUDPAddress() const
     EAddress addr;
     int len = addr.Size();
     getsockname(m_client, addr, &len);
+    addr.Fresh();
     addr = m_port;
     return addr;
 }

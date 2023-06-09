@@ -69,7 +69,8 @@ BOOL CVideoClientDlg::OnInitDialog()
 	SetDlgItemText(IDC_STATIC_VOLUME, _T("100%"));
 	SetDlgItemText(IDC_STATIC_TIME, _T("--:--:--/--:--:--"));
 	m_controller->SetWnd(m_video.GetSafeHwnd());
-	m_url.SetWindowText(_T("file:///D:\\yuankong\\studyproject\\VideoPlay\\VideoClient\\股市讨论.mp4"));
+	//m_url.SetWindowText(_T("file:///D:\\yuankong\\studyproject\\VideoPlay\\VideoClient\\股市讨论.mp4"));
+	m_url.SetWindowText(_T("rtsp://127.0.0.1:554"));
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 

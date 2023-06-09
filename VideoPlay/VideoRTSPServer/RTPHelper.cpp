@@ -13,27 +13,31 @@ int RTPHelper::SendMedialFrame(RTPFrame& rtpframe, EBuffer& frame, const EAddres
         size_t restsize = frame_size % RTP_MAX_SIZE;
         size_t count = frame_size / RTP_MAX_SIZE;
         for (size_t i = 0; i < count; i++) {
-            rtpframe.m_pyload.resize(RTP_MAX_SIZE);
-			((BYTE*)rtpframe.m_pyload)[0] = 0x60 | 28;//0110 0000 | 0001 1100
+            rtpframe.m_pyload.resize(RTP_MAX_SIZE + 2);
+            ((BYTE*)rtpframe.m_pyload)[0] = 0x60 | 28;//0110 0000 | 0001 1100
             ((BYTE*)rtpframe.m_pyload)[1] = nalu;//0000 0000 中间
             if (i == 0)
-                ((BYTE*)rtpframe.m_pyload)[1] = 0x80 | ((BYTE*)rtpframe.m_pyload)[1];//1000 0000 开始
+                ((BYTE*)rtpframe.m_pyload)[1] |= 0x80;//1000 0000 开始
             else if ((restsize == 0) && (i == count - 1))
-                ((BYTE*)rtpframe.m_pyload)[1] = 0x80 | ((BYTE*)rtpframe.m_pyload)[1];//0100 0000 结束
-            memcpy(2 + (BYTE*)rtpframe.m_pyload, pFrame + RTP_MAX_SIZE*i, RTP_MAX_SIZE);
+                ((BYTE*)rtpframe.m_pyload)[1] |= 0x40;//0100 0000 结束
+            memcpy(2 + (BYTE*)rtpframe.m_pyload, pFrame + RTP_MAX_SIZE * i + 1, RTP_MAX_SIZE);//+1表示跳过第一个字节
             SendFrame(rtpframe, client);
             rtpframe.m_head.serial++;
         }
         if (restsize > 0) {
             //处理尾巴 
-            ((BYTE*)rtpframe.m_pyload)[1] = 0x80 | ((BYTE*)rtpframe.m_pyload)[1];//0100 0000 结束
+            rtpframe.m_pyload.resize(restsize + 2);
+            ((BYTE*)rtpframe.m_pyload)[0] = 0x60 | 28;//0110 0000 | 0001 1100
+			((BYTE*)rtpframe.m_pyload)[1] = nalu;//0000 0000 中间
+            ((BYTE*)rtpframe.m_pyload)[1] |= 0x40;//0100 0000 结束
+            memcpy(2 + (BYTE*)rtpframe.m_pyload, pFrame + RTP_MAX_SIZE * count + 1, restsize);
             SendFrame(rtpframe, client);
             rtpframe.m_head.serial++;
         }
     }
     else {//小packet
         rtpframe.m_pyload.resize(frame.size() - sepsize);
-        memcpy(rtpframe.m_pyload, frame, frame.size() - sepsize);
+        memcpy(rtpframe.m_pyload, pFrame, frame.size() - sepsize);
         SendFrame(rtpframe, client);
         //序列号是累加的，时间戳一般是计算出来的，从0开始，每帧追加 时间频率90000/每秒帧数24
         rtpframe.m_head.serial++;     
@@ -56,7 +60,6 @@ int RTPHelper::GetFrameSepSize(EBuffer& frame)
 int RTPHelper::SendFrame(const EBuffer& frame, const EAddress& client)
 {
     int ret = sendto(m_udp, frame, frame.size(), 0, client, client.Size());
-    printf("ret %d size %d ip %s port %d\r\n", ret, frame.size(), client.Ip().c_str(), client.Port());
     return 0;
 }
 
@@ -96,7 +99,7 @@ RTPHeader::operator EBuffer()
     header.serial = htons(header.serial);
     header.timestamp = htonl(header.timestamp);
     header.ssrc = htonl(header.ssrc);
-    int size = 14 + 4 * csrccount;
+    int size = 12 + 4 * csrccount;
     EBuffer result(size);
     memcpy(result, this, size);
     return result;
